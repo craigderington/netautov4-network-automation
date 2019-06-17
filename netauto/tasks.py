@@ -65,13 +65,27 @@ def get_locations():
         # check for HTTP status codes other than 200
         if r.status_code != 200: 
             logger.warning('Status:', r.status_code, 'Headers:', r.headers, 'Error Response:', r.json())
+            return id
 
         # decode the JSON response into a dictionary and use the data
         data = r.json()
-        logger.info(data)
+        
+        # ensure we have a valid data instance
+        if isinstance(data, dict):
+            for row in data["result"]:
+                
+                # send the store ID into the next queue
+                get_location_info.delay(row['StoreID'])
+                logger.info("BBI Store ID: {} was sent to the Location Task Queue for processing".format(str(id)))
+        else:
+            logger.warning("The BBI API response is malformed, returned {} instead of dict".format(str(type(data))))
+            return id
 
     except requests.HTTPError as http_err:
-        logger.warning("API call returned error: {}".format(str(http_err)))
+        logger.warning("BBI API Call returned error: {}".format(str(http_err)))
+        return id
+
+    return id
 
 
 @celery.task(queue="locations", max_retires=3)
@@ -85,16 +99,16 @@ def get_location_info(id):
         try:
             id = int(id)
         except TypeError as err:
-            logger.critical("The store ID parameter is an invalid type and can not be corecred to integer: {}".format(str(err)))
+            logger.critical("The store ID parameter is an invalid type and can not be coerced to integer: {}".format(str(err)))
             return id
 
     pathParams = id
-    resource_Path = "/locations/{}".format(str(pathParams))
+    resource_path = "/location/{}".format(str(pathParams))
     
     try:
         r = requests.request(
             API_METHOD, 
-            SNOW_BASE_URL + resource_Path, 
+            SNOW_BASE_URL + resource_path, 
             headers=hdrs, 
             auth=auth
         )
@@ -105,10 +119,51 @@ def get_location_info(id):
 
         # decode the JSON response into a dictionary and use the data
         data = r.json()
+
+        if isinstance(data, dict):
+            
+            # send the device info into the Task Queue for processing
+            get_devices.delay(data.result.StoreID)
+            logger.info(data)
+            logger.info("BBI Network Automation send Store ID: {} into the task queue for a list of devices".format(str(data.result.StoreID)))        
+
+    except requests.HTTPError as http_err:
+        logger.warning("API call returned error: {}".format(str(http_err)))
+
+    return id
+
+
+@celery.task(queue="devices", max_retries=3)
+def get_devices(store_id):
+    """
+    Get the Location devices data list
+    :param: id int
+    :return json object
+    """
+
+    pathParams = store_id
+    resource_path = "/location/{}/devices".format(str(pathParams))
+
+    try:
+        r = requests.request(
+            API_METHOD,
+            SNOW_BASE_URL + resource_path,
+            headers=hdrs,
+            auth=auth
+        )
+        
+        # check for HTTP status codes other than 200
+        if r.status_code != 200: 
+            logger.warning('Status:', r.status_code, 'Headers:', r.headers, 'Error Response:', r.json())
+
+        # decode the JSON response into a dictionary and use the data
+        data = r.json()
         logger.info(data)
 
     except requests.HTTPError as http_err:
         logger.warning("API call returned error: {}".format(str(http_err)))
+
+    return id    
 
 
 @task_postrun.connect
