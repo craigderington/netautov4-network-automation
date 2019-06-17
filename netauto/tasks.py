@@ -123,7 +123,7 @@ def get_location_info(id):
         if isinstance(data, dict):
             
             # send the device info into the Task Queue for processing
-            get_devices.delay(data.result.StoreID)
+            get_devices.delay(data["result"]["StoreID"])
             logger.info(data)
             logger.info("BBI Network Automation send Store ID: {} into the task queue for a list of devices".format(str(data.result.StoreID)))        
 
