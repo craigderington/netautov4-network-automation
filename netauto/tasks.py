@@ -23,7 +23,7 @@ logger = get_task_logger(__name__)
 SNOW_BASE_URL = "https://dev73949.service-now.com/api/x_328385_restapi/bbi"
 API_METHOD = "GET"
 auth = HTTPBasicAuth("admin", "$GoArmy9605!")
-hdrs = {"Content-Type":"application/json", "Accept":"application/json"}
+hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
 
 def convert_datetime_object(o):
     if isinstance(o, datetime.datetime):
@@ -46,7 +46,7 @@ def log(message):
 @celery.task(queue="locations", max_retries=3)
 def get_locations():
     """
-    Get the list of Active Locations
+    Get the list of Active BBI Locations
     :param: None
     :return list
     """
@@ -65,33 +65,30 @@ def get_locations():
         # check for HTTP status codes other than 200
         if r.status_code != 200: 
             logger.warning('Status:', r.status_code, 'Headers:', r.headers, 'Error Response:', r.json())
-            return id
 
         # decode the JSON response into a dictionary and use the data
         data = r.json()
         
         # ensure we have a valid data instance
         if isinstance(data, dict):
-            for row in data["result"]:
-                
+            for row in data["result"]:                
                 # send the store ID into the next queue
-                get_location_info.delay(row['StoreID'])
+                # get_location_info.delay(row["StoreID"])
                 logger.info("BBI Store ID: {} was sent to the Location Task Queue for processing".format(str(id)))
         else:
-            logger.warning("The BBI API response is malformed, returned {} instead of dict".format(str(type(data))))
-            return id
+            logger.warning("The BBI API response is malformed, returned {} instead of dict".format(type(data)))
 
     except requests.HTTPError as http_err:
         logger.warning("BBI API Call returned error: {}".format(str(http_err)))
-        return id
+
 
     return id
 
 
-@celery.task(queue="locations", max_retires=3)
+@celery.task(queue="locations", max_retries=3)
 def get_location_info(id):
     """
-    Get each location information by Store
+    Get each locations information by Store ID
     :param: id (int)
     :return json object
     """
@@ -115,7 +112,7 @@ def get_location_info(id):
 
         # check for HTTP status codes other than 200
         if r.status_code != 200: 
-            logger.warning('Status:', r.status_code, 'Headers:', r.headers, 'Error Response:', r.json())
+            logger.warning("Status:", r.status_code, "Headers:", r.headers, "Error Response:", r.json())
 
         # decode the JSON response into a dictionary and use the data
         data = r.json()
@@ -126,6 +123,9 @@ def get_location_info(id):
             get_devices.delay(store_id)
             logger.info(data)
             logger.info("BBI Network Automation send Store ID: {} into the task queue for a list of devices".format(str(store_id)))
+        
+        else:
+            logger.warning("The BBI API Response is malformed.  Returned {} instead of dict".format(str(type(data))))
 
     except requests.HTTPError as http_err:
         logger.warning("API call returned error: {}".format(str(http_err)))
@@ -154,7 +154,7 @@ def get_devices(store_id):
         
         # check for HTTP status codes other than 200
         if r.status_code != 200: 
-            logger.warning('Status:', r.status_code, 'Headers:', r.headers, 'Error Response:', r.json())
+            logger.warning("Status:", r.status_code, "Headers:", r.headers, "Error Response:", r.json())
 
         # decode the JSON response into a dictionary and use the data
         data = r.json()
