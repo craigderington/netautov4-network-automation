@@ -65,27 +65,27 @@ def get_locations():
 
         # check for HTTP status codes other than 200
         if r.status_code != 200: 
-            logger.warning('Status:', r.status_code, 'Headers:', r.headers, 'Error Response:', r.json())
+            logger.warning("Status:", r.status_code, "Headers:", r.headers, "Error Response:", r.json())
 
         # decode the JSON response into a dictionary and use the data
-        data = r.json()
-        logger.info("Data Type from API response: {}".format(type(data)))
+        locations = r.json()
+        logger.info("Data Type from API response: {}".format(type(locations)))
+        logger.info(locations)
 
         # ensure we have a valid data instance
-        if isinstance(data, dict):
-            for row in data["result"]:
+        if isinstance(locations, dict):
+            for row in locations["result"]:
                 store_id = row["StoreID"]              
                 # send the store ID into the next queue
                 # get_location_info.delay(store_id)
                 logger.info("BBI Store ID: {} was sent to the Location Task Queue for processing".format(str(store_id)))
         else:
-            logger.warning("The BBI API response is malformed, returned {} instead of dict".format(type(data)))
+            logger.warning("The BBI API response is malformed, returned {} instead of dict".format(type(locations)))
 
     except requests.HTTPError as http_err:
         logger.warning("BBI API Call returned error: {}".format(str(http_err)))
 
-
-    return id
+    return store_id
 
 
 @celery.task(queue="locations", max_retries=3)
@@ -132,7 +132,7 @@ def get_location_info(store_id):
     except requests.HTTPError as http_err:
         logger.warning("API call returned error: {}".format(str(http_err)))
 
-    return id
+    return store_id
 
 
 @celery.task(queue="devices", max_retries=3)
