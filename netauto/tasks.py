@@ -229,7 +229,7 @@ def get_device(device_id):
 
             if all(device_resources):
 
-                device_url = "http://{}:{}/{}".format(str(ipaddr), str(comm_port), str(endpoint))
+                device_url = "http://{}:{}{}".format(str(ipaddr), str(comm_port), str(endpoint))
                 logger.info("Device ID: {} network endpoint defined as: {}".format(device_id, device_url))
                 
                 try:
