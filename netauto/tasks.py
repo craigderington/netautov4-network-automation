@@ -146,6 +146,7 @@ def get_devices(store_id):
 
     pathParams = store_id
     resource_path = "/location/{}/devices".format(str(pathParams))
+    device_id = None
 
     try:
         r = requests.request(
@@ -163,16 +164,95 @@ def get_devices(store_id):
         devices = r.json()
         logger.info(devices)
 
+        if isinstance(devices, dict):
+            for row in devices["result"]:
+                device_id = row["DeviceID"]
+                get_device.delay(device_id)
+                logger.info("")
+
     except requests.HTTPError as http_err:
         logger.warning("API call returned error: {}".format(str(http_err)))
 
     return store_id    
 
 
+@celery.task("endpoints", max_retries=3)
+def get_device(device_id):
+    """
+    Get the device info and contact the resource
+    :param device_id int
+    :return json object
+    """
+
+    if not isinstance(device_id, str):
+        device_id = str(device_id)
+
+    try:
+        r = requests.request(
+            API_METHOD,
+            SNOW_BASE_URL,
+            headers=hdrs,
+            auth=auth
+        )
+
+        # check for HTTP status codes other than 200
+        if r.status_code != 200: 
+            logger.warning("Status:", r.status_code, "Headers:", r.headers, "Error Response:", r.json())
+
+        # decode the JSON response into a dictionary and use the data
+        device = r.json()["result"]
+        logger.info(device)
+
+        if isinstance(device, dict):
+            endpoint = device["Endpoint"]
+            ipaddr = device["IPAddress"]
+            comm_port = device["Port"]
+
+            """
+            The Device should have a basic structure of network information
+            {
+                "result": {
+                    "DeviceName": "FLEM-PDU-2023",
+                    "DeviceType": "pdu",
+                    "DeviceID": "PDU2023",
+                    "IPAddress": "10.0.1.118",
+                    "Port": "7001",
+                    "Endpoint": "/api/v1.0/health/check",
+                    "Location": "Flemings Store 2023",
+                    "StoreID": "2023"
+                }
+            }
+            """
+
+            if all(endpoint, ipaddr, comm_port):
+
+                device_url = "http://{}:{}/{}".format(str(ipaddr), str(comm_port), str(endpoint))
+                logger.info("Device ID: {} network endpoint defined as: {}".format(device_id, device_url))
+                
+                try:
+                    resp = requests.request(API_METHOD, device_url, headers=hdrs)
+                except requests.HTTPError as http_error:
+                    logger.critical("API Health Check failed with: {}".format(str(http_error)))
+
+                # log the response to the console 
+                response_obj = resp.json()               
+                logger.info("Successfully contacted Device ID: {}".format(str(device_id)))
+                logger.info(response_obj)
+            else:
+                logger.info("Can not contact Device ID: {}. DEVICE MONITORING INFO MISSING".format(str(device_id)))            
+
+    except requests.HTTPError as http_err:
+        logger.warning("API call returned error: {}".format(str(http_err)))
+
+    return device_id
+
+
 @task_postrun.connect
 def close_session(*args, **kwargs):
-    # Flask SQLAlchemy will automatically create new sessions for you from
-    # a scoped session factory, given that we are maintaining the same app
-    # context, this ensures tasks have a fresh session (e.g. session errors
-    # won't propagate across tasks)
+    """
+    Flask SQLAlchemy will automatically create new sessions for you from
+    a scoped session factory, given that we are maintaining the same app
+    context, this ensures tasks have a fresh session (e.g. session errors
+    won't propagate across tasks)
+    """
     db.session.remove()
