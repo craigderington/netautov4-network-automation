@@ -121,11 +121,11 @@ def get_location_info(id):
         data = r.json()
 
         if isinstance(data, dict):
-            
+            store_id = data["result"]["StoreID"]
             # send the device info into the Task Queue for processing
-            get_devices.delay(data["result"]["StoreID"])
+            get_devices.delay(store_id)
             logger.info(data)
-            logger.info("BBI Network Automation send Store ID: {} into the task queue for a list of devices".format(str(data.result.StoreID)))        
+            logger.info("BBI Network Automation send Store ID: {} into the task queue for a list of devices".format(str(store_id)))
 
     except requests.HTTPError as http_err:
         logger.warning("API call returned error: {}".format(str(http_err)))
