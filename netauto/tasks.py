@@ -69,13 +69,14 @@ def get_locations():
 
         # decode the JSON response into a dictionary and use the data
         data = r.json()
-        
+        logger.info("Data Type from API response: {}".format(type(data)))
+
         # ensure we have a valid data instance
         if isinstance(data, dict):
             for row in data["result"]:
                 store_id = row["StoreID"]              
                 # send the store ID into the next queue
-                get_location_info.delay(store_id)
+                # get_location_info.delay(store_id)
                 logger.info("BBI Store ID: {} was sent to the Location Task Queue for processing".format(str(store_id)))
         else:
             logger.warning("The BBI API response is malformed, returned {} instead of dict".format(type(data)))
