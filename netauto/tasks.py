@@ -176,7 +176,7 @@ def get_devices(store_id):
     return store_id    
 
 
-@celery.task("endpoints", max_retries=3)
+@celery.task(queue="endpoints", max_retries=3)
 def get_device(device_id):
     """
     Get the device info and contact the resource
