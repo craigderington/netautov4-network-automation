@@ -71,13 +71,14 @@ def get_locations():
         locations = r.json()
         logger.info("Data Type from API response: {}".format(type(locations)))
         logger.info(locations)
+        count = len(locations)
 
         # ensure we have a valid data instance
         if isinstance(locations, dict):
             for row in locations["result"]:
                 store_id = row["StoreID"]              
                 # send the store ID into the next queue
-                # get_location_info.delay(store_id)
+                get_location_info.delay(store_id)
                 logger.info("BBI Store ID: {} was sent to the Location Task Queue for processing".format(str(store_id)))
         else:
             logger.warning("The BBI API response is malformed, returned {} instead of dict".format(type(locations)))
@@ -85,7 +86,7 @@ def get_locations():
     except requests.HTTPError as http_err:
         logger.warning("BBI API Call returned error: {}".format(str(http_err)))
 
-    return store_id
+    return count
 
 
 @celery.task(queue="locations", max_retries=3)
@@ -118,16 +119,16 @@ def get_location_info(store_id):
             logger.warning("Status:", r.status_code, "Headers:", r.headers, "Error Response:", r.json())
 
         # decode the JSON response into a dictionary and use the data
-        data = r.json()
+        location = r.json()
 
-        if isinstance(data, dict):
+        if isinstance(location, dict):
             # send the device info into the Task Queue for processing
             get_devices.delay(store_id)
-            logger.info(data)
+            logger.info(location)
             logger.info("BBI Network Automation send Store ID: {} into the task queue for a list of devices".format(str(store_id)))
         
         else:
-            logger.warning("The BBI API Response is malformed.  Returned {} instead of dict".format(str(type(data))))
+            logger.warning("The BBI API Response is malformed.  Returned {} instead of dict".format(str(type(location))))
 
     except requests.HTTPError as http_err:
         logger.warning("API call returned error: {}".format(str(http_err)))
@@ -159,13 +160,13 @@ def get_devices(store_id):
             logger.warning("Status:", r.status_code, "Headers:", r.headers, "Error Response:", r.json())
 
         # decode the JSON response into a dictionary and use the data
-        data = r.json()
-        logger.info(data)
+        devices = r.json()
+        logger.info(devices)
 
     except requests.HTTPError as http_err:
         logger.warning("API call returned error: {}".format(str(http_err)))
 
-    return id    
+    return store_id    
 
 
 @task_postrun.connect
