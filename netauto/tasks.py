@@ -52,6 +52,7 @@ def get_locations():
     """
 
     resource_path = "/locations"
+    store_id = None
 
     try: 
         # make the request
@@ -71,10 +72,11 @@ def get_locations():
         
         # ensure we have a valid data instance
         if isinstance(data, dict):
-            for row in data["result"]:                
+            for row in data["result"]:
+                store_id = row["StoreID"]              
                 # send the store ID into the next queue
-                # get_location_info.delay(row["StoreID"])
-                logger.info("BBI Store ID: {} was sent to the Location Task Queue for processing".format(str(id)))
+                get_location_info.delay(store_id)
+                logger.info("BBI Store ID: {} was sent to the Location Task Queue for processing".format(str(store_id)))
         else:
             logger.warning("The BBI API response is malformed, returned {} instead of dict".format(type(data)))
 
@@ -86,20 +88,20 @@ def get_locations():
 
 
 @celery.task(queue="locations", max_retries=3)
-def get_location_info(id):
+def get_location_info(store_id):
     """
     Get each locations information by Store ID
     :param: id (int)
     :return json object
     """
-    if not isinstance(id, int):
+    if not isinstance(store_id, int):
         try:
-            id = int(id)
+            store_id = int(store_id)
         except TypeError as err:
             logger.critical("The store ID parameter is an invalid type and can not be coerced to integer: {}".format(str(err)))
-            return id
+            return store_id
 
-    pathParams = id
+    pathParams = store_id
     resource_path = "/location/{}".format(str(pathParams))
     
     try:
@@ -118,7 +120,6 @@ def get_location_info(id):
         data = r.json()
 
         if isinstance(data, dict):
-            store_id = data["result"]["StoreID"]
             # send the device info into the Task Queue for processing
             get_devices.delay(store_id)
             logger.info(data)
