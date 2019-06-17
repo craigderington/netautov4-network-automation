@@ -36,7 +36,7 @@ def convert_utc_to_local(utcdate_obj):
     return utcdate_obj + offset
 
 
-@celery.task(queue="messages", max_retires=3)
+@celery.task(queue="locations", max_retires=3)
 def log(message):
     """Print some log messages"""
     logger.debug(message)
