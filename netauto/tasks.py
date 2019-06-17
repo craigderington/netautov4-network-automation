@@ -182,15 +182,18 @@ def get_device(device_id):
     Get the device info and contact the resource
     :param device_id int
     :return json object
-    """
+    """    
 
     if not isinstance(device_id, str):
         device_id = str(device_id)
 
+    pathParams = device_id
+    resource_path = "/device/{}".format(str(pathParams))
+
     try:
         r = requests.request(
             API_METHOD,
-            SNOW_BASE_URL,
+            SNOW_BASE_URL + resource_path,
             headers=hdrs,
             auth=auth
         )
