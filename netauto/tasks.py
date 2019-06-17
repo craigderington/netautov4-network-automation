@@ -210,7 +210,7 @@ def get_device(device_id):
             endpoint = device["Endpoint"]
             ipaddr = device["IPAddress"]
             comm_port = device["Port"]
-
+            device_resources = [endpoint, ipaddr, comm_port]
             """
             The Device should have a basic structure of network information
             {
@@ -227,7 +227,7 @@ def get_device(device_id):
             }
             """
 
-            if all(endpoint, ipaddr, comm_port):
+            if all(device_resources):
 
                 device_url = "http://{}:{}/{}".format(str(ipaddr), str(comm_port), str(endpoint))
                 logger.info("Device ID: {} network endpoint defined as: {}".format(device_id, device_url))
