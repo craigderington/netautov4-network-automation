@@ -80,7 +80,9 @@ class Alerts(db.Model):
     certainty = Column(String(50), nullable=True)
 
     def __repr__(self):
-        if self.category, self.created, self.message_status, self.description:
+        items = (self.category, self.created, self.message_status, self.description)
+        
+        if all(items):
             return '{} {} {} {}'.format(
                 self.category,
                 self.created,
