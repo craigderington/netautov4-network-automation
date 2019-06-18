@@ -9,7 +9,7 @@ from requests.auth import HTTPBasicAuth
 from celery.signals import task_postrun
 from celery.utils.log import get_task_logger
 from netauto import celery, db
-from netauto.models import User
+from netauto.models import User, Locations, Message
 from sqlalchemy import and_, between
 from sqlalchemy import exc, func
 from sqlalchemy import text
@@ -20,9 +20,9 @@ from datetime import timedelta
 logger = get_task_logger(__name__)
 
 # Base Objects
-SNOW_BASE_URL = "https://dev73949.service-now.com/api/x_328385_restapi/bbi"
+SNOW_BASE_URL = "https://ven02832.service-now.com/api/x_csgh_ebridge_bb/restapi/"
 API_METHOD = "GET"
-auth = HTTPBasicAuth("admin", "$GoArmy9605!")
+auth = HTTPBasicAuth("admin", "St@rW@rs1")
 hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
 
 def convert_datetime_object(o):
@@ -76,10 +76,11 @@ def get_locations():
         # ensure we have a valid data instance
         if isinstance(locations, dict):
             for row in locations["result"]:
-                store_id = row["StoreID"]              
-                # send the store ID into the next queue
-                get_location_info.delay(store_id)
-                logger.info("BBI Store ID: {} was sent to the Location Task Queue for processing".format(str(store_id)))
+                location_id = row["location_id"]              
+                
+                # send the Location ID into the next task queue
+                get_location_info.delay(location_id)
+                logger.info("BBI Location ID: {} was sent to the Task Queue for processing".format(str(location_id)))
         else:
             logger.warning("The BBI API response is malformed, returned {} instead of dict".format(type(locations)))
 
@@ -90,20 +91,20 @@ def get_locations():
 
 
 @celery.task(queue="locations", max_retries=3)
-def get_location_info(store_id):
+def get_location_info(location_id):
     """
-    Get each locations information by Store ID
+    Get each locations information by Location ID
     :param: id (int)
     :return json object
     """
-    if not isinstance(store_id, int):
+    if not isinstance(location_id, int):
         try:
-            store_id = int(store_id)
+            location_id = int(location_id)
         except TypeError as err:
             logger.critical("The store ID parameter is an invalid type and can not be coerced to integer: {}".format(str(err)))
-            return store_id
+            return location_id
 
-    pathParams = store_id
+    pathParams = location_id
     resource_path = "/location/{}".format(str(pathParams))
     
     try:
@@ -123,28 +124,30 @@ def get_location_info(store_id):
 
         if isinstance(location, dict):
             # send the device info into the Task Queue for processing
-            get_devices.delay(store_id)
+            get_devices.delay(location_id)
             logger.info(location)
-            logger.info("BBI Network Automation send Store ID: {} into the task queue for a list of devices".format(str(store_id)))
+            logger.info("BBI Network Automation :: Sending Location ID: {} into the task queue for a " 
+                        "list of network devices".format(str(location_id)))
         
         else:
-            logger.warning("The BBI API Response is malformed.  Returned {} instead of dict".format(str(type(location))))
+            logger.warning("The BBI API Response is malformed :: "
+                           "Returned {} instead of dict".format(str(type(location))))
 
     except requests.HTTPError as http_err:
         logger.warning("API call returned error: {}".format(str(http_err)))
 
-    return store_id
+    return location_id
 
 
 @celery.task(queue="devices", max_retries=3)
-def get_devices(store_id):
+def get_devices(location_id):
     """
     Get the Location devices data list
     :param: id int
     :return json object
     """
 
-    pathParams = store_id
+    pathParams = location_id
     resource_path = "/location/{}/devices".format(str(pathParams))
     device_id = None
 
@@ -166,14 +169,15 @@ def get_devices(store_id):
 
         if isinstance(devices, dict):
             for row in devices["result"]:
-                device_id = row["DeviceID"]
+                device_id = row["device_id"]
                 get_device.delay(device_id)
-                logger.info("")
+                logger.info("BBI Network Automation :: "
+                            "Sending Device ID: {} into the Get Device task queue".format(str(device_id)))
 
     except requests.HTTPError as http_err:
         logger.warning("API call returned error: {}".format(str(http_err)))
 
-    return store_id    
+    return location_id    
 
 
 @celery.task(queue="endpoints", max_retries=3)
@@ -207,42 +211,58 @@ def get_device(device_id):
         logger.info(device)
 
         if isinstance(device, dict):
-            endpoint = device["Endpoint"]
-            ipaddr = device["IPAddress"]
-            comm_port = device["Port"]
-            device_resources = [endpoint, ipaddr, comm_port]
+            url_prefix = device["url_prefix"]
+            endpoint = device["endpoint"]
+            ipaddr = device["ip_address"]
+            comm_port = device["comm_port"]
+            auth_user = device["auth_user"]
+            auth_pass = device["auth_pass"]
+            device_resources = [url_prefix, endpoint, ipaddr, comm_port]
             """
-            The Device should have a basic structure of network information
+            The Network Device should have a basic structure of network information
+            which we can use to contact the device and get a response from the endpoint
             {
                 "result": {
-                    "DeviceName": "FLEM-PDU-2023",
-                    "DeviceType": "pdu",
-                    "DeviceID": "PDU2023",
-                    "IPAddress": "10.0.1.118",
-                    "Port": "7001",
-                    "Endpoint": "/api/v1.0/health/check",
-                    "Location": "Flemings Store 2023",
-                    "StoreID": "2023"
+                    "type": "SD-WAN",
+                    "name": "BONE-SD-WAN-1019",
+                    "device_id": "SDWAN1019",
+                    "url_prefix": "http://",
+                    "ip_address": "10.0.1.118",
+                    "fqdn": "",
+                    "comm_port": "7001",
+                    "endpoint": "/api/v1.0/health/check",
+                    "auth_user": "admin",
+                    "auth_pass": "admin",
+                    "status": "online",
+                    "category": "Networking",
+                    "location_name": "Bonefish Store 1019",
+                    "location_type": "BONEFISH",
+                    "location_id": "1019",
+                    "location_code": "BONE-1019"
                 }
             }
             """
 
             if all(device_resources):
 
-                device_url = "http://{}:{}{}".format(str(ipaddr), str(comm_port), str(endpoint))
+                device_url = "{}{}:{}{}".format(str(url_prefix), str(ipaddr), str(comm_port), str(endpoint))
                 logger.info("Device ID: {} network endpoint defined as: {}".format(device_id, device_url))
                 
                 try:
                     resp = requests.request(API_METHOD, device_url, headers=hdrs)
                 except requests.HTTPError as http_error:
                     logger.critical("API Health Check failed with: {}".format(str(http_error)))
+                    # start the counter, 3rd fail - create alert
+                    # local db: device_id + counter obj
+                    # example: device.counter += 1
+                    # if device.counter >= 3:
 
                 # log the response to the console 
                 response_obj = resp.json()               
                 logger.info("Successfully contacted Device ID: {}".format(str(device_id)))
                 logger.info(response_obj)
             else:
-                logger.info("Can not contact Device ID: {}. DEVICE MONITORING INFO MISSING".format(str(device_id)))            
+                logger.critical("Can not contact Device ID: {}. DEVICE MONITORING INFO MISSING".format(str(device_id)))            
 
     except requests.HTTPError as http_err:
         logger.warning("API call returned error: {}".format(str(http_err)))

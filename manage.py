@@ -9,9 +9,9 @@ app.config.update(dict(
     MAIL_SERVER='localhost',
     MAIL_PORT=1025,
     MAIL_USE_TLS=True,
-    MAIL_USERNAME='craigderington17@gmail.com',
+    MAIL_USERNAME='cderington@championsg',
     MAIL_PASSWORD='None',
-    MAIL_DEFAULT_SENDER='Network Automation Server <earl-automation@contactdms.com>'
+    MAIL_DEFAULT_SENDER='Network Automation Server <netauto@championsg.com>'
 ))
 
 # Flask-Mail

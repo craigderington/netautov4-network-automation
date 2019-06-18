@@ -44,7 +44,7 @@ class Message(db.Model):
             )
 
 
-class Store(db.Model):
+class Locations(db.Model):
     """
     Class instance for Store
     """
