@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, url_for
 from netauto import db
-from netauto.models import User, Message, Alerts, Store
+from netauto.models import User, Message, Alerts, Locations
 from netauto.tasks import log
 home = Blueprint('home', __name__)
 

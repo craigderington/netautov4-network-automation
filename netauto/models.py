@@ -51,6 +51,10 @@ class Locations(db.Model):
     __tablename__ = "stores"
     id = Column(Integer, primary_key=True)
 
+    def __repr__(self):
+        if self.id:
+            return "{}".format(str(id))
+
 
 class Alerts(db.Model):
     """
@@ -76,7 +80,7 @@ class Alerts(db.Model):
     certainty = Column(String(50), nullable=True)
 
     def __repr__(self):
-        if all(self.category, self.created, self.message_status, self.description):
+        if self.category, self.created, self.message_status, self.description:
             return '{} {} {} {}'.format(
                 self.category,
                 self.created,
