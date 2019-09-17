@@ -20,7 +20,8 @@ from datetime import timedelta
 logger = get_task_logger(__name__)
 
 # Base Objects
-SNOW_BASE_URL = "https://ven02832.service-now.com/api/x_csgh_ebridge_bb/restapi/"
+# SNOW_BASE_URL = "https://ven02832.service-now.com/api/x_csgh_ebridge_bb/restapi/"
+SNOW_BASE_URL = "https://championsolutionsgroupdemo2.service-now.com/api/x_328385_restapi/bbi/"
 API_METHOD = "GET"
 auth = HTTPBasicAuth("admin", "St@rW@rs1")
 hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -76,7 +77,7 @@ def get_locations():
         # ensure we have a valid data instance
         if isinstance(locations, dict):
             for row in locations["result"]:
-                location_id = row["location_id"]              
+                location_id = row["StoreID"]              
                 
                 # send the Location ID into the next task queue
                 get_location_info.delay(location_id)
@@ -169,7 +170,7 @@ def get_devices(location_id):
 
         if isinstance(devices, dict):
             for row in devices["result"]:
-                device_id = row["device_id"]
+                device_id = row["DeviceID"]
                 get_device.delay(device_id)
                 logger.info("BBI Network Automation :: "
                             "Sending Device ID: {} into the Get Device task queue".format(str(device_id)))
@@ -211,12 +212,10 @@ def get_device(device_id):
         logger.info(device)
 
         if isinstance(device, dict):
-            url_prefix = device["url_prefix"]
-            endpoint = device["endpoint"]
-            ipaddr = device["ip_address"]
-            comm_port = device["comm_port"]
-            auth_user = device["auth_user"]
-            auth_pass = device["auth_pass"]
+            url_prefix = "http://"
+            endpoint = device["Endpoint"]
+            ipaddr = device["IPAddress"]
+            comm_port = device["Port"]            
             device_resources = [url_prefix, endpoint, ipaddr, comm_port]
             """
             The Network Device should have a basic structure of network information

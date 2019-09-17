@@ -13,8 +13,8 @@ class Config(object):
     # SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', SQLITE_DB)
 
     CELERY_TIMEZONE = 'US/Eastern'
-    CELERY_BROKER_URL = 'amqp://localhost/'
-    CELERY_RESULT_BACKEND = 'rpc://'
+    CELERY_BROKER_URL = 'amqp://0.0.0.0:5672/'
+    CELERY_RESULT_BACKEND = 'redis://0.0.0.0:6379/0'
 
     # define the tasks queues
     CELERY_QUEUES = (
@@ -37,7 +37,7 @@ class Config(object):
 class DevelopmentConfig(Config):
     DEBUG = True
     MONGO_SERVER = 'server-path'
-    MONGO_DB = ''
+    MONGO_DB = '0.0.0.0'
 
 
 class ProductionConfig(Config):
