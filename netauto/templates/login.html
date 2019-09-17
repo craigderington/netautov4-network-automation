@@ -1,0 +1,45 @@
+{% extends "_layout.html" %}
+{% block style %}
+    <style>
+        .col-centered {
+            float: none;
+            margin: 0 auto;
+            margin-top: 0px;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert alert-danger">
+                <ul class=flashes>
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible" style="margin-top:15px;">
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                            <p><i class="fa fa-info-circle"></i> {{ message }}</p>
+                        </div>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <div class="col-lg-6 col-centered">        
+        <form class="form" role="form" action="{{ url_for('login') }}" method="post" style="padding:30px;">
+            <div class="form-group">
+                <input type="email" name="username" class="form-control" placeholder="Username" required="">
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" class="form-control" placeholder="Password" required="">
+            </div>
+            <button type="submit" class="btn btn-primary block full-width m-b">Login</button>
+        </form>       
+    </div>
+
+{% endblock %}

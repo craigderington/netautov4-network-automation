@@ -4,45 +4,48 @@ from click import echo
 from flask_mail import Mail
 from netauto import create_app
 
-app = create_app('development')
+app = create_app("development")
 app.config.update(dict(
-    MAIL_SERVER='localhost',
+    MAIL_SERVER="localhost",
     MAIL_PORT=1025,
     MAIL_USE_TLS=True,
-    MAIL_USERNAME='cderington@championsg',
-    MAIL_PASSWORD='None',
-    MAIL_DEFAULT_SENDER='Network Automation Server <netauto@championsg.com>'
+    MAIL_USERNAME="cderington@championsg",
+    MAIL_PASSWORD="None",
+    MAIL_DEFAULT_SENDER="Network Automation Server <netauto@championsg.com>"
 ))
 
 # Flask-Mail
 mail = Mail(app)
 
+# strict slashes
+app.url_map.strict_slashes = False
 
-@app.cli.command('urlmap')
+
+@app.cli.command("urlmap")
 def urlmap():
     """Prints out all routes"""
-    echo("{:50s} {:40s} {}".format('Endpoint', 'Methods', 'Route'))
+    echo("{:50s} {:40s} {}".format("Endpoint", "Methods", "Route"))
     for route in app.url_map.iter_rules():
-        methods = ','.join(route.methods)
+        methods = ",".join(route.methods)
         echo("{:50s} {:40s} {}".format(route.endpoint, methods, route))
 
 
-@app.cli.command('ipython')
+@app.cli.command("ipython")
 def ipython():
     """Runs a ipython shell in the app context."""
     try:
         import IPython
     except ImportError:
-        echo("IPython not found. Install with: 'pip install ipython'")
+        echo("IPython not found. Install with: "pip install ipython"")
         return
     from flask.globals import _app_ctx_stack
     app = _app_ctx_stack.top.app
-    banner = 'Python %s on %s\nIPython: %s\nApp: %s%s\nInstance: %s\n' % (
+    banner = "Python %s on %s\nIPython: %s\nApp: %s%s\nInstance: %s\n" % (
         sys.version,
         sys.platform,
         IPython.__version__,
         app.import_name,
-        app.debug and ' [debug]' or '',
+        app.debug and " [debug]" or "",
         app.instance_path,
     )
 
@@ -50,10 +53,10 @@ def ipython():
 
     # Support the regular Python interpreter startup script if someone
     # is using it.
-    startup = os.environ.get('PYTHONSTARTUP')
+    startup = os.environ.get("PYTHONSTARTUP")
     if startup and os.path.isfile(startup):
-        with open(startup, 'r') as f:
-            eval(compile(f.read(), startup, 'exec'), ctx)
+        with open(startup, "r") as f:
+            eval(compile(f.read(), startup, "exec"), ctx)
 
     ctx.update(app.make_shell_context())
 

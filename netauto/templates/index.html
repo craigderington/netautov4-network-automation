@@ -1,0 +1,55 @@
+{% extends "_layout.html" %}
+{% block title %}NETAUTO - ebridge Network Automation Tool{% endblock %}
+{% block content %}
+
+    <div class="col-lg-3">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Flask REST APIs</h3>
+            </div>
+            <div class="panel-body">
+                Dozens of <i>ready-to-deploy</i> Flask RESTful APIs containerized as Docker images and available in the Docker Hub.  Deploy the image in OpenShift and create routes to make it publically available.
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">SQLAlchemy Backend</h3>
+            </div>
+            <div class="panel-body">
+                The de-facto standard in Python Database development.  Flask RESTful APIs are supported by a variety of Alchemy dialects. 
+                MySQL, SQLite3, Postgres.  Just added support for MongoDB and pymongo.
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Kubernetes</h3>
+            </div>
+            <div class="panel-body">
+                    Kubernetes is an open-source container-orchestration system for automating application deployment, scaling, and management. 
+                    Originally designed by Google, now maintained by the Cloud Native Foundation.
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">OpenShift</h3>
+            </div>
+            <div class="panel-body">
+                    OpenShift is a family of containerization software developed by Red Hat. 
+                    OpenShift Container Platform; an on-prem <i>PaaS</i> built around Docker containers managed &amp; orchestrated by Kubernetes.
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="text-center text-primary">{{ today }}</div>
+    </div>
+    
+
+    {% endblock %}
