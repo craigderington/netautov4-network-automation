@@ -18,7 +18,7 @@ from io import StringIO
 from datetime import timedelta
 
 # set up our logger utility
-logger = get_task_logger(__name__)
+logger = get_task_logger("ebridge_auto")
 
 # Base Objects
 # SNOW_BASE_URL = "https://ven02832.service-now.com/api/x_csgh_ebridge_bb/restapi/"

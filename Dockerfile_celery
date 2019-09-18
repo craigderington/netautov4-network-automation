@@ -6,5 +6,4 @@ RUN apk add --no-cache --virtual build-deps build-base gcc python3-dev openssl-d
 WORKDIR /code
 COPY . /code
 RUN pip3 install --no-cache-dir -r requirements-dev.txt
-EXPOSE 5555
-CMD ["gunicorn", "-b", "0.0.0.0:5555", "-w", "4", "wsgi:app"]
+CMD ["celery", "-A", "celery_worker:celery", "worker", "-l", "DEBUG", "-n", "worker@%h", "-Q", "locations,devices,endpoints", "-c", "2"]

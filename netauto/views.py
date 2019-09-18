@@ -14,6 +14,14 @@ def init_db():
     db.session.commit()
 
 
+@home.route("/", methods=["GET"])
+@home.route("/index", methods=["GET", "POST"])
+def index():
+    return render_template(
+        "index.html",
+        today=get_date()
+    )
+
 @home.route("/longtask", methods=["POST"])
 def longtask():
     task = long_task.apply_async()
@@ -54,17 +62,9 @@ def taskstatus(task_id):
 @home.route("/alerts")
 def alerts():
     alerts = Alerts.query.all()
-    return render_templates(
-        "index.html",
-        alerts=alerts
-    )
-
-@home.route("/", methods=["GET"])
-@home.route("/index", methods=["GET", "POST"])
-def index():
     return render_template(
         "index.html",
-        today=get_date()
+        alerts=alerts
     )
 
 

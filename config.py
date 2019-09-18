@@ -6,38 +6,65 @@ BASEDIR = os.path.abspath(os.path.dirname(__file__))
 
 class Config(object):
     DEBUG = False
-    SECRET_KEY = os.urandom(32)
+    SECRET_KEY = os.urandom(32)   
 
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:$D1r3ct098!@localhost:3306/netauto'
-    # SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', SQLITE_DB)
-
-    CELERY_TIMEZONE = 'US/Eastern'
-    CELERY_BROKER_URL = 'amqp://0.0.0.0:5672/'
-    CELERY_RESULT_BACKEND = 'redis://0.0.0.0:6379/0'
+    CELERY_TIMEZONE = "US/Eastern"
+    CELERY_ACCEPT_CONTENT = ["json", "yaml"]
 
     # define the tasks queues
     CELERY_QUEUES = (
-        Queue('default', Exchange('default'), routing_key='default'),
-        Queue('messages', Exchange('messages'), routing_key='get_messages'),
-        Queue('locations', Exchange('locations'), routing_key='locations'),
-        Queue('devices', Exchange('devices'), routing_key='devices'),
-        Queue('endpoints', Exchange('endpoints'), routing_key='endpoints')
+        Queue("default", Exchange("netauto"), routing_key="default"),
+        Queue("locations", Exchange("netauto"), routing_key="netauto.tasks.locations"),
+        Queue("devices", Exchange("netauto"), routing_key="netauto.tasks.devices"),
+        Queue("endpoints", Exchange("netauto"), routing_key="netauto.tasks.endpoints")
     )
 
     # define the task routes
     CELERY_ROUTES = {
-        'get_new_messages': {'queue': 'get_messages', 'routing_key': 'get_messages'},
-        'get_all_locations': {'queue': 'get_locations', 'routing_key': 'get_locations'},
-        'get_all_devices': {'queue': 'get_devices', 'routing_key': 'get_devices'},
-        'get_all_endpoints': {'queue': 'get_endpoints', 'routing_key': 'get_endpoints'}
+        "default": {"queue": "default", "routing_key": "default"},
+        "get_locations": {"queue": "locations", "routing_key": "netauto.tasks.locations"},
+        "get_devices": {"queue": "devices", "routing_key": "netauto.tasks.devices"},
+        "get_endpoints": {"queue": "endpoints", "routing_key": "netauto.tasks.endpoints"}
     }
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    MONGO_SERVER = 'server-path'
-    MONGO_DB = '0.0.0.0'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:yufakay3!@localhost:3306/netauto"
+    SQLALCHEMY_DATABASE_URI = "sqlite:////netauto.db"
+    
+    CELERY_BROKER_URL = "pyamqp://0.0.0.0:5672/"
+    CELERY_RESULT_BACKEND = "redis://0.0.0.0:6379/0"
+    
+    MONGO_SERVER = "0.0.0.0:27017"
+    MONGO_DB = "netauto"
+
+
+class DockerConfig(Config):
+    DEBUG = True
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_DATABASE_URI = "sqlite:////netauto.db"
+    
+    CELERY_BROKER_URL = "pyamqp://172.17.0.2:5672/"
+    CELERY_RESULT_BACKEND = "redis://172.17.0.3:6379/0"
+    
+    MONGO_SERVER = "172.17.0.5:27017"
+    MONGO_DB = "netauto"
+
+
+class DockerComposeConfig(Config):
+    DEBUG = True
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:yufakay3!@mysql:3306/netauto"
+    # SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", SQLITE_DB)
+
+    CELERY_TIMEZONE = "US/Eastern"
+    CELERY_BROKER_URL = "pyamqp://rabbitmq:5672/"
+    CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+    
+    MONGO_SERVER = "database:27017"
+    MONGO_DB = "netauto"
 
 
 class ProductionConfig(Config):
@@ -45,6 +72,8 @@ class ProductionConfig(Config):
 
 
 config = {
-    'development': DevelopmentConfig,
-    'production': ProductionConfig
+    "development": DevelopmentConfig,
+    "production": ProductionConfig,
+    "docker": DockerConfig,
+    "docker-compose": DockerComposeConfig
 }
