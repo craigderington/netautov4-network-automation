@@ -21,10 +21,9 @@ from datetime import timedelta
 logger = get_task_logger("ebridge_auto")
 
 # Base Objects
-# SNOW_BASE_URL = "https://ven02832.service-now.com/api/x_csgh_ebridge_bb/restapi/"
-SNOW_BASE_URL = "https://championsolutionsgroupdemo2.service-now.com/api/x_328385_restapi/bbi/"
+SNOW_BASE_URL = "https://dev73949.service-now.com/api/x_328385_restapi/bbi/"
 API_METHOD = "GET"
-auth = HTTPBasicAuth("admin", "St@rW@rs1")
+auth = HTTPBasicAuth("", "")
 hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
 
 def convert_datetime_object(o):
