@@ -119,7 +119,7 @@ services:
         hostname: mysql-server
         image: mysql:latest
         environment:
-            - MYSQL_ROOT_PASSWORD=yufakay3!
+            - MYSQL_ROOT_PASSWORD=netauto
             - MYSQL_DATABASE=netauto
         ports:
             - "3306:3306"
