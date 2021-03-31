@@ -56,7 +56,7 @@ class DockerConfig(Config):
 class DockerComposeConfig(Config):
     DEBUG = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:yufakay3!@mysql:3306/netauto"
+    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://username:password@mysql:3306/netauto"
     # SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", SQLITE_DB)
 
     CELERY_TIMEZONE = "US/Eastern"
